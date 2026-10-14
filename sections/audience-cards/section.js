@@ -16,10 +16,10 @@
     '  --ams-action:#006495; --ams-active:#034b70; --ams-accent:#00a0d0;',
     '  --ams-ink:#1d1d1d; --ams-muted:#5a5a5a; --ams-line:#dfe3e6; --ams-bg:#fff; --ams-tint:#f3f7f9;',
     '  font-family:"Open Sans",system-ui,sans-serif; color:var(--ams-ink);',
-    '  box-sizing:border-box; margin:0 auto; max-width:1200px; padding:48px 16px;',
+    '  box-sizing:border-box; margin:0 auto; max-width:1200px; padding:32px 16px;',
     '}',
     ROOT + ' *{box-sizing:inherit}',
-    ROOT + ' .ams-head{max-width:72ch;margin:0 0 28px}',
+    ROOT + ' .ams-head{max-width:72ch;margin:0 0 22px}',
     ROOT + ' .ams-eyebrow{display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.12em;',
     '  text-transform:uppercase;color:var(--ams-action);margin:0 0 10px}',
     ROOT + ' .ams-h2{font-family:"Archivo","Open Sans",sans-serif;font-weight:700;',
@@ -43,8 +43,17 @@
     ROOT + ' .ams-cta{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.95rem;color:var(--ams-action)}',
     ROOT + ' .ams-cta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}',
     ROOT + ' .ams-card:hover .ams-cta svg{transform:translateX(3px)}',
-    '@media (max-width:980px){' + ROOT + ' .ams-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}',
-    '@media (max-width:560px){' + ROOT + '{padding:32px 16px}' + ROOT + ' .ams-grid{grid-template-columns:1fr;gap:14px}}',
+    /* Fixed-frame contract: below 980px the cards swipe sideways instead of stacking,
+       so the section height stays ~constant and the AEM iframe never needs to grow. */
+    '@media (max-width:980px){',
+    ROOT + ' .ams-grid{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;',
+    '  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 2px 6px;margin:0 -16px;padding-left:16px;padding-right:16px}',
+    ROOT + ' .ams-grid::-webkit-scrollbar{display:none}',
+    ROOT + ' .ams-grid>li{flex:0 0 min(300px,78vw);scroll-snap-align:start}',
+    ROOT + ' .ams-card:hover,' + ROOT + ' .ams-card:focus-visible{transform:none}',
+    ROOT + ' .ams-intro{font-size:1rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}',
+    '}',
+    '@media (max-width:560px){' + ROOT + '{padding:24px 16px}' + ROOT + ' .ams-head{margin-bottom:16px}' + ROOT + ' .ams-text{font-size:.9rem}}',
     '@media (prefers-reduced-motion:reduce){' + ROOT + ' .ams-card,' + ROOT + ' .ams-cta svg{transition:none}}'
   ].join('\n');
 

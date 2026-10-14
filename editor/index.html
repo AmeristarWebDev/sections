@@ -36,13 +36,20 @@
   .btn.primary:hover{background:var(--active)}
   .btn.ghost{border-color:transparent;color:var(--muted);font-weight:400}
   .btn:disabled{opacity:.5;cursor:default}
+  .frameH{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+  .frameH input{width:64px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;text-align:right}
+  .fit{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .fit.ok{color:var(--ok);background:#e6f4ec}
+  .fit.bad{color:#b42318;background:#fde8e6}
+  .frameWrap{position:relative}
+  .frameWrap::after{content:attr(data-label);position:absolute;right:8px;bottom:-22px;font-size:11px;color:var(--muted)}
 
   /* ---- layout ---- */
   .main{display:grid;grid-template-columns:380px 1fr;flex:1;min-height:0}
   .form{overflow:auto;background:var(--panel);border-right:1px solid var(--line);padding:16px 18px 40px}
   .stage{overflow:auto;padding:24px;display:flex;justify-content:center;align-items:flex-start}
   .frameWrap{background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.08);border:1px solid var(--line);width:100%;transition:width .2s}
-  .frameWrap iframe{display:block;width:100%;border:0;min-height:200px}
+  .frameWrap iframe{display:block;width:100%;border:0;height:640px}
   .stage.tablet .frameWrap{width:820px}
   .stage.mobile .frameWrap{width:390px}
 
@@ -105,6 +112,8 @@
     <button data-vp="tablet">Tablet</button>
     <button data-vp="mobile">Mobile</button>
   </div>
+  <label class="frameH" title="The pixel height you'll set on the AEM embed component. The preview is clipped to it, exactly like AEM.">Frame <input type="number" id="frameH" min="200" max="2000" step="10"> px</label>
+  <span class="fit" id="fit"></span>
   <div class="spacer"></div>
   <span class="status" id="status">—</span>
   <button class="btn ghost" id="resetBtn" title="Discard local draft and reload content.json from the repo">Reset to repo</button>
@@ -139,14 +148,15 @@
     </div>
     <p class="help">Design phase: commit this as <code>sections/&lt;name&gt;/content.json</code>. Live phase: upload it to the DAM at the URL above and switch the embed to "DAM" below.</p>
 
-    <h3>2 · Embed snippet</h3>
+    <h3>2 · Embed</h3>
     <div class="choice">
       <label><input type="radio" name="src" value="repo" checked> Content from repo (design phase)</label>
       <label><input type="radio" name="src" value="dam"> Content from DAM (live)</label>
     </div>
     <div class="choice">
-      <label><input type="radio" name="mode" value="script" checked> Script injection (preferred)</label>
-      <label><input type="radio" name="mode" value="iframe"> iframe (fallback)</label>
+      <label><input type="radio" name="mode" value="url" checked> URL-only component (OneCMS)</label>
+      <label><input type="radio" name="mode" value="iframe"> iframe HTML</label>
+      <label><input type="radio" name="mode" value="script"> Script injection</label>
     </div>
     <div class="code" id="snippet"><button class="copy" id="cpSnippet">Copy</button><span id="snippetText"></span></div>
     <div class="note" id="modeNote"></div>
@@ -155,7 +165,7 @@
     <ol class="steps">
       <li>Merge <code>main</code> → <code>prod</code> so Pages serves the approved <code>section.js</code>.</li>
       <li>Upload <code id="jsonName2">section.json</code> to the DAM folder above and publish the asset.</li>
-      <li>In AEM, switch the Embed component to the <strong>DAM</strong> snippet. Publish the page.</li>
+      <li>In AEM, switch the embed to the <strong>DAM</strong> URL. Height stays the same. Publish the page.</li>
       <li>From now on, copy changes = edit the DAM JSON. Design changes = edit the repo and merge to <code>prod</code>.</li>
     </ol>
   </div>
@@ -224,6 +234,7 @@
       if (draft && draft !== savedJson) { try { data = JSON.parse(draft); setStatus('Draft restored (unsaved in repo)', true); } catch (e) { data = res[1]; } }
       else { data = clone(res[1]); setStatus('Matches repo'); }
       buildForm();
+        $('frameH').value = current.frameHeight || 600; applyFrameHeight();
       frame.src = base + 'index.html?editor=1';
     }).catch(function (e) { setStatus('Load failed'); console.error(e); $('form').innerHTML = '<div class="empty">Could not load ' + esc(name) + '.</div>'; });
   }
@@ -324,10 +335,26 @@
   }
   function pushPreview() { if (frameReady && frame.contentWindow) frame.contentWindow.postMessage({ type: 'ams:content', data: data }, '*'); }
 
+  // ---------- fixed-frame contract ----------
+  var contentH = 0;
+  function frameHeight() { return parseInt($('frameH').value, 10) || 600; }
+  function applyFrameHeight() {
+    frame.style.height = frameHeight() + 'px';
+    frame.parentNode.setAttribute('data-label', 'AEM frame · ' + frameHeight() + 'px');
+    updateFit();
+  }
+  function updateFit() {
+    var f = $('fit'), h = frameHeight();
+    if (!contentH) { f.className = 'fit'; f.textContent = ''; return; }
+    if (contentH <= h) { f.className = 'fit ok'; f.textContent = 'Fits · content ' + contentH + 'px'; }
+    else { f.className = 'fit bad'; f.textContent = 'Clips · content ' + contentH + 'px > frame ' + h + 'px'; }
+  }
+  $('frameH').addEventListener('input', applyFrameHeight);
+
   window.addEventListener('message', function (e) {
     var m = e.data; if (!m) return;
     if (m.type === 'ams:ready') { frameReady = true; pushPreview(); }
-    if (m.type === 'ams:height') frame.style.height = Math.max(120, m.height) + 'px';
+    if (m.type === 'ams:height') { contentH = m.height; updateFit(); }
   });
   frame.addEventListener('load', function () { frameReady = true; pushPreview(); });
 
@@ -371,7 +398,12 @@
     var page = joinUrl(s.pagesBase, 'sections/' + n + '/index.html');
     var dam = joinUrl(s.damBase, n + '.json');
     var title = (schema && schema.title) || current.title || n;
+    var h = frameHeight();
 
+    if (mode === 'url') {
+      return 'URL:     ' + page + (src === 'dam' ? '?content=' + encodeURIComponent(dam) : '') + '\n' +
+             'Height:  ' + h + 'px   (not 100% — a fixed pixel value)';
+    }
     if (mode === 'script') {
       return '<!-- Ameristar section: ' + n + ' · content from ' + (src === 'dam' ? 'DAM' : 'repo') + ' -->\n' +
         '<div data-ameristar-section="' + n + '"' + (src === 'dam' ? ' data-content="' + dam + '"' : '') + '></div>\n' +
@@ -380,18 +412,20 @@
     var id = 'ams-' + n;
     var iframeSrc = page + (src === 'dam' ? '?content=' + encodeURIComponent(dam) : '');
     return '<!-- Ameristar section: ' + n + ' (iframe) · content from ' + (src === 'dam' ? 'DAM' : 'repo') + ' -->\n' +
-      '<iframe id="' + id + '" src="' + iframeSrc + '" title="' + esc(title) + '" loading="lazy" style="width:100%;border:0;display:block;min-height:300px"></iframe>\n' +
-      '<script>addEventListener("message",function(e){var m=e.data;if(m&&m.type==="ams:height"&&m.name==="' + n + '"){var f=document.getElementById("' + id + '");if(f)f.style.height=m.height+"px"}})<\/script>';
+      '<iframe id="' + id + '" src="' + iframeSrc + '" title="' + esc(title) + '" loading="lazy" scrolling="no" style="width:100%;height:' + h + 'px;border:0;display:block"></iframe>';
   }
 
   function renderSnippet() {
     if (!current) return;
     $('snippetText').textContent = buildSnippet();
     var mode = document.querySelector('input[name=mode]:checked').value;
-    $('modeNote').textContent = mode === 'script'
-      ? 'Script injection renders into the AEM page DOM: inherits page width and fonts, auto-heights, crawlable by Google. Requires the Embed component to execute <script> tags — verify once on a test page. If OneCMS strips or innerHTML-injects the markup, use the iframe snippet.'
-      : 'iframe is fully isolated (safe for Leaflet-style widgets) but is not indexed as page content and loads its own fonts. The one-line listener resizes it to fit; without it, set a fixed height.';
+    $('modeNote').textContent = {
+      url: 'For the OneCMS URL embed component: paste the URL into its source field and set its height to the pixel value above. The section fills that frame and never scrolls — the Fits/Clips badge in the toolbar tells you the content fits before you publish.',
+      iframe: 'Same thing as raw HTML, for an Embed component that accepts markup. Height is fixed to the frame; scrolling="no" belts-and-braces the no-scrollbar rule.',
+      script: 'Renders into the AEM page DOM — only works in an Embed component that executes <script>. The OneCMS URL component does not, so this is here for a future raw-HTML component or another site.'
+    }[mode];
   }
+  $('frameH').addEventListener('input', renderSnippet);
 
   $('cpSnippet').addEventListener('click', function () { copyText(buildSnippet()); });
   $('cpJson').addEventListener('click', function () { copyText(JSON.stringify(data, null, 2)); });

@@ -9,8 +9,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  html,body{margin:0;background:#fff}
-  body.ams-standalone{padding:0}
+  /* Fixed-frame contract: this page fills whatever height the AEM embed gives it
+     and never shows a scrollbar. Content is safe-centered (margin:auto collapses
+     to 0 if content is taller, so overflow clips at the bottom, not both ends). */
+  html,body{margin:0;background:#fff;height:100%}
+  body{display:flex;flex-direction:column;overflow:hidden}
+  #ams-root{width:100%;margin:auto 0;flex:0 0 auto}
 </style>
 </head>
 <body class="ams-standalone">
@@ -39,12 +43,13 @@
       if (api) { api.ensureCss(); root.classList.add('ams-section', 'ams-' + NAME); api.render(root, m.data); }
     });
 
-    // iframe auto-height: tell the parent how tall we are.
+    // Report content height to the parent. A raw-HTML embed uses it to size the
+    // iframe; the editor uses it to warn when content would overflow the frame.
     function postHeight() {
       if (window.parent === window) return;
-      window.parent.postMessage({ type: 'ams:height', name: NAME, height: document.documentElement.scrollHeight }, '*');
+      window.parent.postMessage({ type: 'ams:height', name: NAME, height: root.scrollHeight, frame: window.innerHeight }, '*');
     }
-    if ('ResizeObserver' in window) new ResizeObserver(postHeight).observe(document.body);
+    if ('ResizeObserver' in window) { new ResizeObserver(postHeight).observe(root); new ResizeObserver(postHeight).observe(document.body); }
     window.addEventListener('load', postHeight);
     // Let the editor know we're ready to receive content.
     if (window.parent !== window) window.parent.postMessage({ type: 'ams:ready', name: NAME }, '*');

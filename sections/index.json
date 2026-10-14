@@ -5,6 +5,7 @@
     {
       "name": "audience-cards",
       "title": "Audience cards",
+      "frameHeight": 640,
       "description": "Four-path audience router: homeowner, contractor, architect/engineer, distributor."
     }
   ]
