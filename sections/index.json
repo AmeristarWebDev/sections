@@ -1,0 +1,11 @@
+{
+  "pagesBase": "https://ameristarwebdev.github.io/sections/",
+  "damBase": "https://www.ameristarperimeter.com/content/dam/ameristar/com/us/en/sections/",
+  "sections": [
+    {
+      "name": "audience-cards",
+      "title": "Audience cards",
+      "description": "Four-path audience router: homeowner, contractor, architect/engineer, distributor."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Template section",
+  "fields": [
+    { "key": "headline", "label": "Headline", "type": "text" },
+    { "key": "body", "label": "Body", "type": "textarea" }
+  ]
+}

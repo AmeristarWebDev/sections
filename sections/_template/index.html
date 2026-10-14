@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ameristar section — _template</title>
+<!-- Fonts are loaded HERE for standalone preview / iframe mode only.
+     The script-injected embed does NOT load fonts; the AEM page already has them. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#fff}
+  body.ams-standalone{padding:0}
+</style>
+</head>
+<body class="ams-standalone">
+
+<div id="ams-root" data-ameristar-section="_template"></div>
+
+<script>
+  // iframe mode: ?content=<url-encoded JSON url> → live content from the DAM
+  (function () {
+    var p = new URLSearchParams(location.search);
+    var c = p.get('content');
+    if (c) document.getElementById('ams-root').setAttribute('data-content', c);
+  })();
+</script>
+<script src="section.js"></script>
+<script>
+  (function () {
+    var NAME = '_template';
+    var root = document.getElementById('ams-root');
+
+    // Editor mode: the editor posts {type:'ams:content', data} for live preview.
+    window.addEventListener('message', function (e) {
+      var m = e.data;
+      if (!m || m.type !== 'ams:content') return;
+      var api = window.AmeristarSections && window.AmeristarSections[NAME];
+      if (api) { api.ensureCss(); root.classList.add('ams-section', 'ams-' + NAME); api.render(root, m.data); }
+    });
+
+    // iframe auto-height: tell the parent how tall we are.
+    function postHeight() {
+      if (window.parent === window) return;
+      window.parent.postMessage({ type: 'ams:height', name: NAME, height: document.documentElement.scrollHeight }, '*');
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(postHeight).observe(document.body);
+    window.addEventListener('load', postHeight);
+    // Let the editor know we're ready to receive content.
+    if (window.parent !== window) window.parent.postMessage({ type: 'ams:ready', name: NAME }, '*');
+  })();
+</script>
+</body>
+</html>

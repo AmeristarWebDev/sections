@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ameristar Section Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --action:#006495; --active:#034b70; --accent:#00a0d0;
+    --ink:#1a1f24; --muted:#5f6b76; --line:#dde3e8; --bg:#f3f5f7; --panel:#fff; --tint:#eaf3f8;
+    --ok:#1f8a4c; --warn:#b4530a; --radius:8px;
+    --font:"Open Sans",system-ui,sans-serif; --head:"Archivo","Open Sans",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+
+  /* ---- top bar ---- */
+  .bar{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
+  .brand{font-family:var(--head);font-weight:700;color:var(--active);font-size:15px;letter-spacing:.01em;white-space:nowrap}
+  .brand small{display:block;font-family:var(--font);font-weight:400;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .bar select{padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;min-width:220px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg button{border:0;background:#fff;padding:7px 12px;color:var(--muted)}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--tint);color:var(--active);font-weight:600}
+  .spacer{flex:1}
+  .status{font-size:12px;color:var(--muted);white-space:nowrap}
+  .status.dirty{color:var(--warn)}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 12px;font-weight:600;color:var(--active)}
+  .btn.primary{background:var(--action);border-color:var(--action);color:#fff}
+  .btn.primary:hover{background:var(--active)}
+  .btn.ghost{border-color:transparent;color:var(--muted);font-weight:400}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  /* ---- layout ---- */
+  .main{display:grid;grid-template-columns:380px 1fr;flex:1;min-height:0}
+  .form{overflow:auto;background:var(--panel);border-right:1px solid var(--line);padding:16px 18px 40px}
+  .stage{overflow:auto;padding:24px;display:flex;justify-content:center;align-items:flex-start}
+  .frameWrap{background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.08);border:1px solid var(--line);width:100%;transition:width .2s}
+  .frameWrap iframe{display:block;width:100%;border:0;min-height:200px}
+  .stage.tablet .frameWrap{width:820px}
+  .stage.mobile .frameWrap{width:390px}
+
+  /* ---- form controls ---- */
+  .form h2{font-family:var(--head);font-size:16px;margin:0 0 4px;color:var(--active)}
+  .form .desc{color:var(--muted);margin:0 0 16px;font-size:13px}
+  .field{margin:0 0 14px}
+  .field label{display:block;font-weight:600;font-size:12px;letter-spacing:.02em;margin:0 0 5px;color:var(--ink)}
+  .field input[type=text],.field input[type=url],.field select,.field textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+  .field textarea{min-height:76px;resize:vertical;line-height:1.45}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,160,208,.18)}
+  .help{font-size:11.5px;color:var(--muted);margin:4px 0 0}
+  .list{border:1px solid var(--line);border-radius:var(--radius);padding:6px;background:var(--bg)}
+  .item{background:#fff;border:1px solid var(--line);border-radius:6px;margin:6px 0;overflow:hidden}
+  .item summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 10px;font-weight:600;color:var(--active);user-select:none}
+  .item summary::-webkit-details-marker{display:none}
+  .item summary .n{color:var(--muted);font-weight:400;font-size:12px}
+  .item summary .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .tools{display:flex;gap:2px}
+  .item .tools button{border:0;background:transparent;color:var(--muted);padding:2px 6px;border-radius:4px;font-size:13px}
+  .item .tools button:hover{background:var(--tint);color:var(--active)}
+  .item .body{padding:8px 10px 2px;border-top:1px solid var(--line)}
+  .addBtn{width:100%;margin:4px 0 0;padding:8px;border:1px dashed var(--line);background:#fff;border-radius:6px;color:var(--action);font-weight:600}
+  .addBtn:disabled{color:var(--muted);cursor:default}
+  .raw{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+  .raw textarea{width:100%;min-height:220px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px}
+  .raw .err{color:#b42318;font-size:12px;margin-top:6px;min-height:16px}
+
+  /* ---- ship drawer ---- */
+  .drawer{position:fixed;inset:0;background:rgba(10,20,30,.45);display:none;align-items:stretch;justify-content:flex-end;z-index:20}
+  .drawer.open{display:flex}
+  .drawer .panel{width:min(640px,100%);background:var(--panel);height:100%;overflow:auto;padding:22px 24px 40px;box-shadow:-10px 0 30px rgba(0,0,0,.2)}
+  .panel h2{font-family:var(--head);margin:0 0 4px;color:var(--active);font-size:18px}
+  .panel h3{font-family:var(--head);margin:22px 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .panel .close{float:right}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .code{position:relative;background:#0f1a22;color:#dbe7f0;border-radius:6px;padding:12px 12px 12px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all;margin:6px 0 10px}
+  .code .copy{position:absolute;top:8px;right:8px;background:#1f3140;border:0;color:#fff;border-radius:4px;padding:4px 9px;font:600 11px var(--font)}
+  .code .copy:hover{background:var(--action)}
+  .choice{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 4px}
+  .choice label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:#fff;cursor:pointer}
+  .choice input{margin:0}
+  .steps{margin:0;padding-left:18px;line-height:1.6;color:var(--ink)}
+  .steps li{margin:0 0 6px}
+  .note{background:var(--tint);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;color:var(--active);font-size:13px;margin:8px 0 0}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--active);color:#fff;padding:9px 16px;border-radius:6px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30}
+  .toast.show{opacity:1}
+  .empty{color:var(--muted);text-align:center;padding:60px 20px}
+  @media (max-width:900px){.main{grid-template-columns:1fr}.stage{display:none}}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="brand">Section Editor<small>Ameristar · hybrid content</small></div>
+  <select id="sectionPick" aria-label="Section"><option>Loading…</option></select>
+  <div class="seg" id="viewport" aria-label="Preview width">
+    <button data-vp="desktop" class="on">Desktop</button>
+    <button data-vp="tablet">Tablet</button>
+    <button data-vp="mobile">Mobile</button>
+  </div>
+  <div class="spacer"></div>
+  <span class="status" id="status">—</span>
+  <button class="btn ghost" id="resetBtn" title="Discard local draft and reload content.json from the repo">Reset to repo</button>
+  <button class="btn" id="openStandalone" title="Open this section's preview page in a new tab">Open page ↗</button>
+  <button class="btn primary" id="shipBtn">Ship it</button>
+</div>
+
+<div class="main">
+  <aside class="form" id="form"><div class="empty">Pick a section to start.</div></aside>
+  <section class="stage" id="stage">
+    <div class="frameWrap"><iframe id="frame" title="Section preview"></iframe></div>
+  </section>
+</div>
+
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="shipTitle">
+  <div class="panel">
+    <button class="btn ghost close" id="closeDrawer">Close ✕</button>
+    <h2 id="shipTitle">Ship it</h2>
+    <p class="desc" style="color:var(--muted);margin:0">Export this section's content and grab the AEM embed snippet.</p>
+
+    <h3>Hosting</h3>
+    <div class="row">
+      <div class="field"><label for="pagesBase">GitHub Pages base URL</label><input type="url" id="pagesBase"></div>
+      <div class="field"><label for="damBase">DAM JSON folder URL</label><input type="url" id="damBase"></div>
+    </div>
+    <p class="help">Saved in this browser. The DAM URL is where you'll upload <code id="jsonName">section.json</code> once copy is approved.</p>
+
+    <h3>1 · Content</h3>
+    <div class="choice">
+      <button class="btn" id="dlJson">Download content.json</button>
+      <button class="btn" id="cpJson">Copy JSON</button>
+    </div>
+    <p class="help">Design phase: commit this as <code>sections/&lt;name&gt;/content.json</code>. Live phase: upload it to the DAM at the URL above and switch the embed to "DAM" below.</p>
+
+    <h3>2 · Embed snippet</h3>
+    <div class="choice">
+      <label><input type="radio" name="src" value="repo" checked> Content from repo (design phase)</label>
+      <label><input type="radio" name="src" value="dam"> Content from DAM (live)</label>
+    </div>
+    <div class="choice">
+      <label><input type="radio" name="mode" value="script" checked> Script injection (preferred)</label>
+      <label><input type="radio" name="mode" value="iframe"> iframe (fallback)</label>
+    </div>
+    <div class="code" id="snippet"><button class="copy" id="cpSnippet">Copy</button><span id="snippetText"></span></div>
+    <div class="note" id="modeNote"></div>
+
+    <h3>3 · Promote to live</h3>
+    <ol class="steps">
+      <li>Merge <code>main</code> → <code>prod</code> so Pages serves the approved <code>section.js</code>.</li>
+      <li>Upload <code id="jsonName2">section.json</code> to the DAM folder above and publish the asset.</li>
+      <li>In AEM, switch the Embed component to the <strong>DAM</strong> snippet. Publish the page.</li>
+      <li>From now on, copy changes = edit the DAM JSON. Design changes = edit the repo and merge to <code>prod</code>.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- state ----------
+  var registry = null, current = null, schema = null, data = null, savedJson = '';
+  var frame = document.getElementById('frame');
+  var frameReady = false;
+  var LS = { draft: function (n) { return 'ams:draft:' + n; }, settings: 'ams:settings' };
+
+  // ---------- helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function ls(get, key, val) { try { if (get) return localStorage.getItem(key); if (val == null) localStorage.removeItem(key); else localStorage.setItem(key, val); } catch (e) { return null; } }
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 1600); }
+  function copyText(txt) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt).then(function () { toast('Copied'); });
+    var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Copied'); } catch (e) { toast('Copy failed'); }
+    document.body.removeChild(ta); return Promise.resolve();
+  }
+  function get(obj, path) { return path.reduce(function (o, k) { return o == null ? undefined : o[k]; }, obj); }
+  function set(obj, path, v) { var o = obj; for (var i = 0; i < path.length - 1; i++) { if (o[path[i]] == null) o[path[i]] = typeof path[i + 1] === 'number' ? [] : {}; o = o[path[i]]; } o[path[path.length - 1]] = v; }
+  function blankFor(fields) { var o = {}; fields.forEach(function (f) { o[f.key] = f.type === 'list' ? [] : (f.type === 'select' ? (f.options && f.options[0]) || '' : ''); }); return o; }
+
+  // ---------- settings ----------
+  function settings() {
+    var s = {}; try { s = JSON.parse(ls(true, LS.settings) || '{}'); } catch (e) { }
+    return { pagesBase: s.pagesBase || (registry && registry.pagesBase) || '', damBase: s.damBase || (registry && registry.damBase) || '' };
+  }
+  function saveSettings() { ls(false, LS.settings, JSON.stringify({ pagesBase: $('pagesBase').value.trim(), damBase: $('damBase').value.trim() })); renderSnippet(); }
+
+  // ---------- load ----------
+  function loadRegistry() {
+    return fetch('../sections/index.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (reg) {
+      registry = reg;
+      var pick = $('sectionPick'); pick.innerHTML = '';
+      reg.sections.forEach(function (s) { var o = document.createElement('option'); o.value = s.name; o.textContent = s.title + '  (' + s.name + ')'; pick.appendChild(o); });
+      var want = location.hash.replace('#', '') || (reg.sections[0] && reg.sections[0].name);
+      if (want) { pick.value = want; loadSection(want); }
+    }).catch(function (e) {
+      $('form').innerHTML = '<div class="empty">Could not load <code>../sections/index.json</code>.<br><br>Serve the repo over HTTP (e.g. <code>python -m http.server</code> from the repo root) — <code>file://</code> blocks fetch.</div>';
+      console.error(e);
+    });
+  }
+
+  function loadSection(name) {
+    current = registry.sections.filter(function (s) { return s.name === name; })[0] || { name: name, title: name };
+    location.hash = name; frameReady = false;
+    setStatus('Loading…');
+    var base = '../sections/' + name + '/';
+    return Promise.all([
+      fetch(base + 'schema.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }),
+      fetch(base + 'content.json', { cache: 'no-cache' }).then(function (r) { return r.json(); })
+    ]).then(function (res) {
+      schema = res[0]; savedJson = JSON.stringify(res[1], null, 2);
+      var draft = ls(true, LS.draft(name));
+      if (draft && draft !== savedJson) { try { data = JSON.parse(draft); setStatus('Draft restored (unsaved in repo)', true); } catch (e) { data = res[1]; } }
+      else { data = clone(res[1]); setStatus('Matches repo'); }
+      buildForm();
+      frame.src = base + 'index.html?editor=1';
+    }).catch(function (e) { setStatus('Load failed'); console.error(e); $('form').innerHTML = '<div class="empty">Could not load ' + esc(name) + '.</div>'; });
+  }
+
+  function setStatus(msg, dirty) { var s = $('status'); s.textContent = msg; s.classList.toggle('dirty', !!dirty); }
+
+  // ---------- form ----------
+  function buildForm() {
+    var form = $('form'); form.innerHTML = '';
+    var h = document.createElement('h2'); h.textContent = schema.title || current.title; form.appendChild(h);
+    if (current.description) { var d = document.createElement('p'); d.className = 'desc'; d.textContent = current.description; form.appendChild(d); }
+    schema.fields.forEach(function (f) { form.appendChild(renderField(f, [f.key])); });
+
+    var raw = document.createElement('div'); raw.className = 'raw';
+    raw.innerHTML = '<div class="field"><label for="rawJson">Raw JSON</label><textarea id="rawJson" spellcheck="false"></textarea><div class="err" id="rawErr"></div></div>';
+    form.appendChild(raw);
+    var ta = raw.querySelector('#rawJson'); ta.value = JSON.stringify(data, null, 2);
+    ta.addEventListener('input', function () {
+      try { data = JSON.parse(ta.value); raw.querySelector('#rawErr').textContent = ''; onChange(true); }
+      catch (e) { raw.querySelector('#rawErr').textContent = 'Invalid JSON: ' + e.message; }
+    });
+  }
+
+  function renderField(f, path) {
+    var wrap = document.createElement('div'); wrap.className = 'field';
+    var id = 'f-' + path.join('-');
+    if (f.type !== 'list') {
+      var lab = document.createElement('label'); lab.htmlFor = id; lab.textContent = f.label || f.key; wrap.appendChild(lab);
+    }
+    var val = get(data, path);
+    var el;
+    switch (f.type) {
+      case 'textarea':
+        el = document.createElement('textarea'); el.value = val == null ? '' : val; break;
+      case 'select':
+        el = document.createElement('select');
+        (f.options || []).forEach(function (o) { var op = document.createElement('option'); op.value = o; op.textContent = o; el.appendChild(op); });
+        el.value = val == null ? '' : val; break;
+      case 'list':
+        return renderList(f, path);
+      default:
+        el = document.createElement('input'); el.type = f.type === 'url' ? 'url' : 'text'; el.value = val == null ? '' : val;
+    }
+    el.id = id;
+    el.addEventListener('input', function () { set(data, path, el.value); onChange(); });
+    wrap.appendChild(el);
+    if (f.help) { var hp = document.createElement('p'); hp.className = 'help'; hp.textContent = f.help; wrap.appendChild(hp); }
+    return wrap;
+  }
+
+  function renderList(f, path) {
+    var wrap = document.createElement('div'); wrap.className = 'field';
+    var lab = document.createElement('label'); lab.textContent = f.label || f.key; wrap.appendChild(lab);
+    var box = document.createElement('div'); box.className = 'list'; wrap.appendChild(box);
+    var items = get(data, path); if (!Array.isArray(items)) { items = []; set(data, path, items); }
+
+    function rebuild() {
+      box.innerHTML = '';
+      items.forEach(function (item, i) {
+        var det = document.createElement('details'); det.className = 'item'; det.open = items.length <= 2;
+        var title = (f.itemLabel && item[f.itemLabel]) || (f.label || f.key).replace(/s$/, '') + ' ' + (i + 1);
+        det.innerHTML = '<summary><span class="n">' + (i + 1) + '</span><span class="t">' + esc(title) + '</span>' +
+          '<span class="tools"><button type="button" data-a="up" title="Move up">↑</button><button type="button" data-a="down" title="Move down">↓</button><button type="button" data-a="del" title="Remove">✕</button></span></summary>';
+        var body = document.createElement('div'); body.className = 'body';
+        f.fields.forEach(function (sf) { body.appendChild(renderField(sf, path.concat([i, sf.key]))); });
+        det.appendChild(body);
+        det.querySelector('.tools').addEventListener('click', function (e) {
+          var a = e.target.getAttribute('data-a'); if (!a) return; e.preventDefault();
+          if (a === 'del') { if (f.min && items.length <= f.min) return toast('Minimum ' + f.min); items.splice(i, 1); }
+          if (a === 'up' && i > 0) { items.splice(i - 1, 0, items.splice(i, 1)[0]); }
+          if (a === 'down' && i < items.length - 1) { items.splice(i + 1, 0, items.splice(i, 1)[0]); }
+          rebuild(); onChange();
+        });
+        // keep summary title live
+        if (f.itemLabel) body.addEventListener('input', function () { det.querySelector('.t').textContent = item[f.itemLabel] || title; });
+        box.appendChild(det);
+      });
+      var add = document.createElement('button'); add.type = 'button'; add.className = 'addBtn'; add.textContent = '+ Add ' + (f.label || f.key).replace(/s$/, '').toLowerCase();
+      add.disabled = !!(f.max && items.length >= f.max);
+      add.addEventListener('click', function () { items.push(blankFor(f.fields)); rebuild(); onChange(); });
+      box.appendChild(add);
+    }
+    rebuild();
+    return wrap;
+  }
+
+  // ---------- change → preview ----------
+  var t;
+  function onChange(fromRaw) {
+    clearTimeout(t);
+    t = setTimeout(function () {
+      var json = JSON.stringify(data, null, 2);
+      if (!fromRaw) { var ta = $('rawJson'); if (ta && document.activeElement !== ta) ta.value = json; }
+      if (json === savedJson) { ls(false, LS.draft(current.name), null); setStatus('Matches repo'); }
+      else { ls(false, LS.draft(current.name), json); setStatus('Edited — draft saved locally', true); }
+      pushPreview();
+    }, 120);
+  }
+  function pushPreview() { if (frameReady && frame.contentWindow) frame.contentWindow.postMessage({ type: 'ams:content', data: data }, '*'); }
+
+  window.addEventListener('message', function (e) {
+    var m = e.data; if (!m) return;
+    if (m.type === 'ams:ready') { frameReady = true; pushPreview(); }
+    if (m.type === 'ams:height') frame.style.height = Math.max(120, m.height) + 'px';
+  });
+  frame.addEventListener('load', function () { frameReady = true; pushPreview(); });
+
+  // ---------- toolbar ----------
+  $('sectionPick').addEventListener('change', function () { loadSection(this.value); });
+  $('viewport').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    [].forEach.call(this.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
+    $('stage').className = 'stage ' + b.getAttribute('data-vp');
+  });
+  $('resetBtn').addEventListener('click', function () {
+    if (!current) return;
+    if (!confirm('Discard your local draft and reload content.json from the repo?')) return;
+    ls(false, LS.draft(current.name), null); loadSection(current.name);
+  });
+  $('openStandalone').addEventListener('click', function () { if (current) window.open('../sections/' + current.name + '/index.html', '_blank'); });
+
+  // ---------- ship drawer ----------
+  function openDrawer() {
+    if (!current) return;
+    var s = settings(); $('pagesBase').value = s.pagesBase; $('damBase').value = s.damBase;
+    $('jsonName').textContent = $('jsonName2').textContent = current.name + '.json';
+    renderSnippet(); $('drawer').classList.add('open');
+  }
+  function closeDrawer() { $('drawer').classList.remove('open'); }
+  $('shipBtn').addEventListener('click', openDrawer);
+  $('closeDrawer').addEventListener('click', closeDrawer);
+  $('drawer').addEventListener('click', function (e) { if (e.target === this) closeDrawer(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
+  $('pagesBase').addEventListener('input', saveSettings);
+  $('damBase').addEventListener('input', saveSettings);
+  [].forEach.call(document.querySelectorAll('input[name=src],input[name=mode]'), function (r) { r.addEventListener('change', renderSnippet); });
+
+  function joinUrl(base, rest) { return (base || '').replace(/\/?$/, '/') + rest; }
+
+  function buildSnippet() {
+    var s = settings(), n = current.name;
+    var src = document.querySelector('input[name=src]:checked').value;
+    var mode = document.querySelector('input[name=mode]:checked').value;
+    var js = joinUrl(s.pagesBase, 'sections/' + n + '/section.js');
+    var page = joinUrl(s.pagesBase, 'sections/' + n + '/index.html');
+    var dam = joinUrl(s.damBase, n + '.json');
+    var title = (schema && schema.title) || current.title || n;
+
+    if (mode === 'script') {
+      return '<!-- Ameristar section: ' + n + ' · content from ' + (src === 'dam' ? 'DAM' : 'repo') + ' -->\n' +
+        '<div data-ameristar-section="' + n + '"' + (src === 'dam' ? ' data-content="' + dam + '"' : '') + '></div>\n' +
+        '<script src="' + js + '" defer><\/script>';
+    }
+    var id = 'ams-' + n;
+    var iframeSrc = page + (src === 'dam' ? '?content=' + encodeURIComponent(dam) : '');
+    return '<!-- Ameristar section: ' + n + ' (iframe) · content from ' + (src === 'dam' ? 'DAM' : 'repo') + ' -->\n' +
+      '<iframe id="' + id + '" src="' + iframeSrc + '" title="' + esc(title) + '" loading="lazy" style="width:100%;border:0;display:block;min-height:300px"></iframe>\n' +
+      '<script>addEventListener("message",function(e){var m=e.data;if(m&&m.type==="ams:height"&&m.name==="' + n + '"){var f=document.getElementById("' + id + '");if(f)f.style.height=m.height+"px"}})<\/script>';
+  }
+
+  function renderSnippet() {
+    if (!current) return;
+    $('snippetText').textContent = buildSnippet();
+    var mode = document.querySelector('input[name=mode]:checked').value;
+    $('modeNote').textContent = mode === 'script'
+      ? 'Script injection renders into the AEM page DOM: inherits page width and fonts, auto-heights, crawlable by Google. Requires the Embed component to execute <script> tags — verify once on a test page. If OneCMS strips or innerHTML-injects the markup, use the iframe snippet.'
+      : 'iframe is fully isolated (safe for Leaflet-style widgets) but is not indexed as page content and loads its own fonts. The one-line listener resizes it to fit; without it, set a fixed height.';
+  }
+
+  $('cpSnippet').addEventListener('click', function () { copyText(buildSnippet()); });
+  $('cpJson').addEventListener('click', function () { copyText(JSON.stringify(data, null, 2)); });
+  $('dlJson').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = current.name + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function () { URL.revokeObjectURL(a.href); }, 500);
+    toast('Downloaded ' + current.name + '.json');
+  });
+
+  loadRegistry();
+})();
+</script>
+</body>
+</html>

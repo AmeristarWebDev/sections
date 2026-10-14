@@ -1,0 +1,23 @@
+{
+  "title": "Audience cards",
+  "fields": [
+    { "key": "eyebrow", "label": "Eyebrow", "type": "text", "help": "Small label above the headline. Leave blank to hide." },
+    { "key": "headline", "label": "Headline", "type": "text" },
+    { "key": "intro", "label": "Intro", "type": "textarea", "help": "One or two sentences. Leave blank to hide." },
+    {
+      "key": "cards",
+      "label": "Cards",
+      "type": "list",
+      "min": 2,
+      "max": 4,
+      "itemLabel": "title",
+      "fields": [
+        { "key": "icon", "label": "Icon", "type": "select", "options": ["home", "hammer", "blueprint", "truck", "shield", "none"] },
+        { "key": "title", "label": "Title", "type": "text" },
+        { "key": "body", "label": "Body", "type": "textarea" },
+        { "key": "cta", "label": "Link text", "type": "text" },
+        { "key": "href", "label": "Link URL", "type": "url", "help": "Site-relative is fine: /us/en/homeowners" }
+      ]
+    }
+  ]
+}

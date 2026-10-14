@@ -1,0 +1,35 @@
+{
+  "eyebrow": "Start here",
+  "headline": "What are you building?",
+  "intro": "Ameristar makes everything from backyard ornamental fence to crash-rated barriers for critical infrastructure. Tell us who you are and we'll get you to the right products, tools and people.",
+  "cards": [
+    {
+      "icon": "home",
+      "title": "Homeowners",
+      "body": "Ornamental steel and aluminum fence for yards, pools and driveways, with a lifetime of low maintenance.",
+      "cta": "Explore residential fence",
+      "href": "/us/en/homeowners"
+    },
+    {
+      "icon": "hammer",
+      "title": "Contractors & Installers",
+      "body": "Installation guides, product availability, dealer locator and the tools to quote and build faster.",
+      "cta": "Go to the contractor hub",
+      "href": "/us/en/contractors"
+    },
+    {
+      "icon": "blueprint",
+      "title": "Architects & Engineers",
+      "body": "Specs, CAD and BIM files, crash ratings and system drawings. No forms, no gates — download what you need.",
+      "cta": "Browse specs & drawings",
+      "href": "/us/en/architects"
+    },
+    {
+      "icon": "truck",
+      "title": "Distributors & Partners",
+      "body": "Customer extranet, online pricing tool, order status and marketing assets for Ameristar partners.",
+      "cta": "Sign in to the extranet",
+      "href": "/us/en/distributors"
+    }
+  ]
+}
