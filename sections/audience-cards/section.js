@@ -11,6 +11,17 @@
   var NAME = 'audience-cards';
   var ROOT = '.ams-' + NAME;
 
+  function narrowCss(R) {
+    return [
+      R + ' .ams-grid{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;',
+      '  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 16px 6px;margin:0 -16px;scroll-padding:0 16px}',
+      R + ' .ams-grid::-webkit-scrollbar{display:none}',
+      R + ' .ams-grid>li{flex:0 0 min(300px,78vw);scroll-snap-align:start}',
+      R + ' .ams-card:hover,' + R + ' .ams-card:focus-visible{transform:none}',
+      R + ' .ams-intro{font-size:1rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}'
+    ].join('\n');
+  }
+
   var CSS = [
     ROOT + '{',
     '  --ams-action:#006495; --ams-active:#034b70; --ams-accent:#00a0d0;',
@@ -44,15 +55,11 @@
     ROOT + ' .ams-cta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}',
     ROOT + ' .ams-card:hover .ams-cta svg{transform:translateX(3px)}',
     /* Fixed-frame contract: below 980px the cards swipe sideways instead of stacking,
-       so the section height stays ~constant and the AEM iframe never needs to grow. */
-    '@media (max-width:980px){',
-    ROOT + ' .ams-grid{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;',
-    '  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 2px 6px;margin:0 -16px;padding-left:16px;padding-right:16px}',
-    ROOT + ' .ams-grid::-webkit-scrollbar{display:none}',
-    ROOT + ' .ams-grid>li{flex:0 0 min(300px,78vw);scroll-snap-align:start}',
-    ROOT + ' .ams-card:hover,' + ROOT + ' .ams-card:focus-visible{transform:none}',
-    ROOT + ' .ams-intro{font-size:1rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}',
-    '}',
+       so the section height stays ~constant and the AEM iframe never needs to grow.
+       Emitted twice: for the media query (iframe width) and for .ams-narrow, which the
+       host page sets from the device's real screen width when a parent over-sizes us. */
+    '@media (max-width:980px){' + narrowCss(ROOT) + '}',
+    narrowCss(ROOT + '.ams-narrow'),
     '@media (max-width:560px){' + ROOT + '{padding:24px 16px}' + ROOT + ' .ams-head{margin-bottom:16px}' + ROOT + ' .ams-text{font-size:.9rem}}',
     '@media (prefers-reduced-motion:reduce){' + ROOT + ' .ams-card,' + ROOT + ' .ams-cta svg{transition:none}}'
   ].join('\n');

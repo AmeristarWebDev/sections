@@ -43,6 +43,18 @@
       if (api) { api.ensureCss(); root.classList.add('ams-section', 'ams-' + NAME); api.render(root, m.data); }
     });
 
+    // Device-width safety net. Media queries see the iframe's width, and a parent
+    // may hand us a desktop width on a phone. screen.width is the device's real
+    // CSS width, so use the smaller of the two to decide narrow layout, and if the
+    // iframe is wider than the screen, pin content to the visible left edge.
+    function fitDevice() {
+      var dev = screen.width || 1e9, w = window.innerWidth;
+      root.classList.toggle('ams-narrow', Math.min(w, dev) < 980);
+      if (w > dev) { root.style.maxWidth = dev + 'px'; root.style.marginLeft = '0'; }
+      else { root.style.maxWidth = ''; root.style.marginLeft = ''; }
+    }
+    fitDevice(); window.addEventListener('resize', fitDevice);
+
     // Report content height to the parent. A raw-HTML embed uses it to size the
     // iframe; the editor uses it to warn when content would overflow the frame.
     function postHeight() {
